@@ -1,69 +1,58 @@
+require 'active_record'
+
+require_relative 'lib/models/user'
+require_relative 'lib/models/message'
 require_relative 'lib/database'
-require_relative 'lib/user'
-require_relative 'lib/interface'
-require_relative 'lib/message'
 
-current_path = File.dirname(__FILE__)
-db_path = current_path + '/data/db/console.test.db'
+DBConnection.connect('development')
 
-interface = Interface.new
-db = DataBase.new(db_path)
+def self.cls
+  system("cls") || system("clear")
+end
 
-loop do
-  choice = nil
-  until choice == 1 || choice == 2
-    puts "Выберите регистрация или авторизация\nregistr - 1\nlogin - 2"
-    choice = STDIN.gets.chomp.to_i
-    if choice == 1
-      name = ""
-      until name.size >= 3
-        puts 'Введите ваше Имя(login name)'
-        name = STDIN.gets.chomp
-        puts 'Имя должно быть не короче трёх символов' if name.size < 3
-      end
-      user = User.new(name)
-      db.action_with_db(interface.query_to_registr(name))
-      puts "Регистрация завершена\n\n"
-    elsif choice == 2
-      name = nil
-      db_answer = []
-      while interface.user_exist?(name, db_answer) == false
-        puts 'Введите имя'
-        name = STDIN.gets.chomp
-        user = User.new(name)
-        db_answer = db.action_with_db(interface.query_to_login(name))
-        puts 'Такого имени нет в базе' if interface.user_exist?(name, db_answer) == false
-      end
-      puts "Авторизация успешна\n\n"
-    else
-      puts 'Выбор не коректен'
-    end
+
+cls
+user_choice = nil
+until user_choice == 1 || user_choice == 2
+  puts "Выберите регистрация или авторизация\nДля регистрации нажми - 1\nДля авторизации нажми - 2"
+  user_choice = STDIN.gets.chomp.to_i
+  if user_choice == 1
+    puts "Введите ваше имя\n\n"
+    name = STDIN.gets.chomp
+    puts "Введите ваш email\n\n"
+    email = STDIN.gets.chomp
+    user = User.create(name: name, email: email)
+    user.id ? next : user_choice = nil
+    puts 'Такой пользователь уже занят'
+  elsif user_choice == 2
+    puts 'Введите ваш email'
+    email = STDIN.gets.chomp
+    user = User.where(email: email).last
+    user ? next : user_choice = nil
+    puts 'Пользователя с таким email нет'
   end
+  puts "\nВведены некорректные данные \n\n"
+end
 
-  choice = nil
-  while choice != 9
-    puts "\n\nВыберите действие:"
-    puts "написать общее сообщение - 1\nпрочитать общее сообщение - 2"
-    puts "написать личное сообщение - 3\nпрочитать личное сообщенияе - 4"
-    puts 'выход - 9'
+while user_choice != 9
+  puts "Выберите действие:\n"
+  puts "написать сообщение - 1\nпрочитать общие сообщения - 2"
+  puts "прочитать личное сообщения - 3\nвыход - 9"
 
-    choice = STDIN.gets.chomp.to_i
-    if choice == 1 || choice == 3
-      puts 'Введите текст сообщения'
-      text = STDIN.gets.chomp
-      if choice == 3
-        puts 'Кому хотите отправить сообщение'
-        whom = STDIN.gets.chomp
-      end
-    end
-    if [1, 2, 3, 4].include?(choice)
-      query = interface.make_query_request(choice, user.name, text, whom)
-      db_as_hash = true
-      messages = []
-      messages = db.action_with_db(query, db_as_hash).map {|str| messages << Message.new(str)}
-      messages.each {|i| i.to_s} if [2, 4].include?(choice)
-    else
-      puts 'Выбор не коректен'
-    end
+  user_choice = STDIN.gets.chomp.to_i
+  if user_choice == 1
+    puts 'Введите текст сообщения'
+    text = STDIN.gets.chomp
+    puts "Напишите email кому хотите отправить лично\nОставьте пустым для отправки всем"
+    whom = STDIN.gets.chomp
+    message = Message.create(user: user, text: text, whom: whom)
+    message.id ? next : user_choice = nil
+    puts "Не введен текст или больше 100 символов\n"
+  elsif user_choice == 2
+    messages = Message.where(whom: [nil, ""])
+    messages.each(&:to_s)
+  elsif user_choice == 3
+    messages = Message.where(whom: user.email)
+    messages.each(&:to_s)
   end
 end

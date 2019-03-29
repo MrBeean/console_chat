@@ -1,12 +1,7 @@
-require 'sqlite3'
-
-class DataBase
-  def initialize(db_path)
-    @db = SQLite3::Database.open(db_path)
-  end
-
-  def action_with_db(query, boolean = false)
-    @db.results_as_hash = boolean
-    @db.execute(query)
+class DBConnection
+  def self.connect(environment)
+    config_yml = File.join(File.expand_path(Dir.pwd), 'db', 'config.yml')
+    db_configuration = YAML.load(File.read(config_yml))
+    ActiveRecord::Base.establish_connection(db_configuration[environment])
   end
 end
