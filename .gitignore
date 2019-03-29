@@ -1,0 +1,11 @@
+.idea
+.rvmrc
+
+coverage/*
+
+db/development.sqlite3
+db/test.sqlite3
+db/schema.rb
+
+Gemfile.lock
+
