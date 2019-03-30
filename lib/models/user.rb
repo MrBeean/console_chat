@@ -1,13 +1,23 @@
+require 'openssl'
+
+# User отвечает за данные в таблице user
 class User < ActiveRecord::Base
   has_many :messages, dependent: :destroy
 
-  before_validation :userdata_downcase!
+  before_validation :downcase_userdata!
 
-  validates :name, presence: true, length: { in: 3..20 }
-  validates :email, presence: true, uniqueness: true
+  validates :name,
+            presence: { message: 'не может быть пустым' },
+            length: { maximum: 20, message: 'не может быть больше 20 символов' }
+  validates :email,
+            presence: { message: 'не может быть пустым' },
+            uniqueness: { message: 'должен быть уникальнымм' }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
 
-  def userdata_downcase!
-    self.name.downcase!
-    self.email.downcase!
+  attr_accessor :password
+
+  def downcase_userdata!
+    name.downcase!
+    email.downcase!
   end
 end

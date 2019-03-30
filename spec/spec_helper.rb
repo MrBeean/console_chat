@@ -1,4 +1,10 @@
 require 'simplecov'
+require 'active_record'
+
+require_relative '../lib/database'
+
+DBConnection.connect('test')
+
 SimpleCov.start do
   add_filter '/spec/'
 end
