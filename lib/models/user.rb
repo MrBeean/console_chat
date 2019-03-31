@@ -5,6 +5,7 @@ class User < ActiveRecord::Base
   include BCrypt
 
   has_many :messages, dependent: :destroy
+  has_and_belongs_to_many :messages
 
   before_validation :downcase_userdata!
 

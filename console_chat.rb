@@ -2,6 +2,7 @@ require 'active_record'
 
 require_relative 'lib/models/user'
 require_relative 'lib/models/message'
+require_relative 'lib/models/message_user'
 require_relative 'lib/database'
 
 DBConnection.connect('development')
@@ -12,9 +13,9 @@ end
 
 def create_user(params)
   user = User.new(
-      name: params[:name],
-      email: params[:email],
-      password: params[:password]
+    name: params[:name],
+    email: params[:email],
+    password: params[:password]
   )
   user.save!
 rescue ActiveRecord::RecordInvalid => error_message
@@ -23,13 +24,26 @@ end
 
 def create_message(params)
   message = Message.new(
-      user: params[:user],
-      text: params[:text],
-      whom: params[:whom]
+    user: params[:user],
+    text: params[:text]
   )
-  message.save!
-rescue ActiveRecord::RecordInvalid => error_message
-  puts error_message
+  begin
+    message.save!
+  rescue ActiveRecord::RecordInvalid => error_message
+    puts error_message
+  end
+  return nil if message.id.nil?
+
+  if params[:whom].empty?
+    User.all.each { |user_member| MessagesUsers.create(user: user_member, message: message) }
+  else
+    whom = User.find_by(email: params[:whom])
+    if whom
+      MessagesUsers.create(user: whom, message: message)
+    else
+      puts "Сообщение не отправлено, такого пользователя #{whom} нет"
+    end
+  end
   message
 end
 
@@ -61,10 +75,13 @@ until user_choice == 1 || user_choice == 2
 end
 
 while user_choice != 9
+  puts '--------------'
+  puts "Всего вам адресованно #{MessagesUsers.where(user: user).count} сообщений"
+  puts 'Не прочитанных сообщений - ' + MessagesUsers.where(user: user).where(read: false).count.to_s
+  puts '--------------'
   puts "\nВыберите действие:\n"
-  puts "написать сообщение - 1\nпрочитать общие сообщения - 2"
-  puts "прочитать личное сообщения - 3\nпрочитать свои сообщения - 4"
-  puts 'выход - 9'
+  puts "написать сообщение - 1\nпрочитать сообщения, адресованные мне - 2"
+  puts "прочитать написанные мной сообщения - 3\nвыход - 9"
 
   user_choice = STDIN.gets.chomp.to_i
   if user_choice == 1
@@ -75,14 +92,14 @@ while user_choice != 9
     params[:whom] = STDIN.gets.chomp
     params[:user] = user
     message = create_message(params)
-    message.id ? next : user_choice = nil
+    message ? next : user_choice = nil
   elsif user_choice == 2
-    messages = Message.where(whom: [nil, ''])
-    messages.each(&:to_s)
+    MessagesUsers.where(user: user).where(read: false).each do |relation|
+      relation.message.to_s
+      relation.read = true
+      relation.save!
+    end
   elsif user_choice == 3
-    messages = Message.where(whom: user.email)
-    messages.each(&:to_s)
-  elsif user_choice == 4
     messages = Message.where(user_id: user.id)
     messages.each(&:to_s)
   end
