@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'activerecord'
+gem 'bcrypt'
 gem 'rspec'
 gem 'rubocop'
 gem 'simplecov'

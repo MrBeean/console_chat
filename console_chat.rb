@@ -10,6 +10,29 @@ def self.cls
   system('cls') || system('clear')
 end
 
+def create_user(params)
+  user = User.new(
+      name: params[:name],
+      email: params[:email],
+      password: params[:password]
+  )
+  user.save!
+rescue ActiveRecord::RecordInvalid => error_message
+  puts error_message
+end
+
+def create_message(params)
+  message = Message.new(
+      user: params[:user],
+      text: params[:text],
+      whom: params[:whom]
+  )
+  message.save!
+rescue ActiveRecord::RecordInvalid => error_message
+  puts error_message
+  message
+end
+
 cls
 user_choice = nil
 until user_choice == 1 || user_choice == 2
@@ -21,14 +44,19 @@ until user_choice == 1 || user_choice == 2
     params[:name] = STDIN.gets.chomp
     puts "Введите ваш email\n\n"
     params[:email] = STDIN.gets.chomp
-    user = DBConnection.create_user(params)
-    user.id ? next : user_choice = nil
+    puts "Введите ваш пароль\n\n"
+    params[:password] = STDIN.gets.chomp
+    create_user(params)
+    user = User.find_by(email: params[:email])
+    user ? next : user_choice = nil
   elsif user_choice == 2
     puts 'Введите ваш email'
     email = STDIN.gets.chomp
-    user = User.find_by(email: email)
+    puts "Введите ваш пароль\n\n"
+    password = STDIN.gets.chomp
+    user = User.authenticate(email, password)
     user ? next : user_choice = nil
-    puts 'Пользователя с таким email нет'
+    puts 'Вы ошиблись в email/пароле'
   end
 end
 
@@ -46,7 +74,7 @@ while user_choice != 9
     puts "Напишите email кому хотите отправить лично\n(Оставьте пустым для отправки всем)"
     params[:whom] = STDIN.gets.chomp
     params[:user] = user
-    message = DBConnection.create_message(params)
+    message = create_message(params)
     message.id ? next : user_choice = nil
   elsif user_choice == 2
     messages = Message.where(whom: [nil, ''])
