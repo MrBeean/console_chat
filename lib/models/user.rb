@@ -37,7 +37,7 @@ class User < ActiveRecord::Base
   end
 
   def downcase_userdata!
-    name.downcase!
-    email.downcase!
+    name.downcase! if name.present?
+    email.downcase! if email.present?
   end
 end

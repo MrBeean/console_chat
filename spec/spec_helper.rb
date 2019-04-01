@@ -1,13 +1,12 @@
-require 'simplecov'
 require 'active_record'
 
 require_relative '../lib/database'
+require_relative '../lib/models/user'
+require_relative '../lib/models/message'
+require_relative '../lib/models/message_user'
 
 DBConnection.connect('test')
-
-SimpleCov.start do
-  add_filter '/spec/'
-end
+ActiveRecord::Migration.maintain_test_schema!
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
@@ -18,4 +17,10 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = true
   end
   config.shared_context_metadata_behavior = :apply_to_host_groups
+
+  config.before(:suite) do
+    MessagesUsers.destroy_all
+    Message.destroy_all
+    User.destroy_all
+  end
 end

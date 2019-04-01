@@ -21,6 +21,7 @@
     bundle
     rake db:create
     rake db:migrate
+    bundle exec rake db:schema:load RAILS_ENV=test
 
 ### Использвоание / Запуск
     ruby console_chat.rb
