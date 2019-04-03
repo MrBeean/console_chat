@@ -3,48 +3,14 @@ require 'active_record'
 require_relative 'lib/models/user'
 require_relative 'lib/models/message'
 require_relative 'lib/models/message_user'
+require_relative 'lib/controller/user_controller'
+require_relative 'lib/controller/message_controller'
 require_relative 'lib/database'
 
 DBConnection.connect('development')
 
 def self.cls
   system('cls') || system('clear')
-end
-
-def create_user(params)
-  user = User.new(
-    name: params[:name],
-    email: params[:email],
-    password: params[:password]
-  )
-  user.save!
-rescue ActiveRecord::RecordInvalid => error_message
-  puts error_message
-end
-
-def create_message(params)
-  message = Message.new(
-    user: params[:user],
-    text: params[:text]
-  )
-  begin
-    message.save!
-  rescue ActiveRecord::RecordInvalid => error_message
-    puts error_message
-  end
-  return nil if message.id.nil?
-
-  if params[:whom].empty?
-    User.all.each { |user_member| MessagesUsers.create(user: user_member, message: message) }
-  else
-    whom = User.find_by(email: params[:whom])
-    if whom
-      MessagesUsers.create(user: whom, message: message)
-    else
-      puts "Сообщение не отправлено, такого пользователя #{whom} нет"
-    end
-  end
-  message
 end
 
 cls
@@ -60,7 +26,7 @@ until user_choice == 1 || user_choice == 2
     params[:email] = STDIN.gets.chomp
     puts "Введите ваш пароль\n\n"
     params[:password] = STDIN.gets.chomp
-    create_user(params)
+    UserController.create_user(params)
     user = User.find_by(email: params[:email])
     user ? next : user_choice = nil
   elsif user_choice == 2
@@ -73,6 +39,9 @@ until user_choice == 1 || user_choice == 2
     puts 'Вы ошиблись в email/пароле'
   end
 end
+
+users = User.all
+messages_controller = MessageController.new(users)
 
 while user_choice != 9
   puts '--------------'
@@ -91,7 +60,7 @@ while user_choice != 9
     puts "Напишите email кому хотите отправить лично\n(Оставьте пустым для отправки всем)"
     params[:whom] = STDIN.gets.chomp
     params[:user] = user
-    message = create_message(params)
+    message = messages_controller.create_message(params)
     message ? next : user_choice = nil
   elsif user_choice == 2
     MessagesUsers.where(user: user).where(read: false).each do |relation|

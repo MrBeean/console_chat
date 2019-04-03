@@ -2,7 +2,9 @@ require 'active_record'
 
 require_relative '../lib/database'
 require_relative '../lib/models/user'
+require_relative '../lib/controller/user_controller'
 require_relative '../lib/models/message'
+require_relative '../lib/controller/message_controller'
 require_relative '../lib/models/message_user'
 
 DBConnection.connect('test')
