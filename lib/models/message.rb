@@ -16,7 +16,7 @@ class Message < ActiveRecord::Base
   def to_s
     table = Terminal::Table.new(
       title: created_at.strftime('%Y.%m.%d %T'),
-      rows: [[user.name], [text]],
+      rows: [[user.name], [user.email], [text]],
       style: { width: 104 }
     )
     puts table

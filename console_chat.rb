@@ -44,13 +44,14 @@ users = User.all
 messages_controller = MessageController.new(users)
 
 while user_choice != 9
+  MessagesUsers.where(user: user).reload
   puts '--------------'
   puts "Всего вам адресованно #{MessagesUsers.where(user: user).count} сообщений"
   puts 'Не прочитанных сообщений - ' + MessagesUsers.where(user: user).where(read: false).count.to_s
   puts '--------------'
   puts "\nВыберите действие:\n"
   puts "написать сообщение - 1\nпрочитать сообщения, адресованные мне - 2"
-  puts "прочитать написанные мной сообщения - 3\nвыход - 9"
+  puts "прочитать написанные мной сообщения - 3\nобновить страницу - 4\nвыход - 9"
 
   user_choice = STDIN.gets.chomp.to_i
   if user_choice == 1
